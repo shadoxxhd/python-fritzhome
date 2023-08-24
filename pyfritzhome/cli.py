@@ -166,6 +166,32 @@ def template_apply(fritz, args):
     """Command that applies a template."""
     fritz.apply_template(args.ain)
 
+def light_state(fritz, args):
+    """Command that prints light bulb information"""
+    devices = fritz.get_devices_as_dict()
+    device = devices[args.ain]
+
+    if device.has_lightbulb:
+        print(" Light bulb:")
+        print("  state=%s" % ("Off" if device.state == 0 else "On"))
+        if device.has_level:
+            print("  level=%s" % device.level)
+        if device.has_color:
+            print("  hue=%s" % device.hue)
+            print("  saturation=%s" % device.saturation)
+
+def light_level(fritz, args):
+    """Command that sets the brightness of a light bulb."""
+    fritz.set_level(args.ain, args.lvl)
+
+def light_color(fritz, args):
+    """Command that sets the color of a light bulb."""
+    fritz.set_color(args.ain, (args.hue, args.sat), args.dur)
+
+def light_temp(fritz, args):
+    """Command that sets the color temperature of a light bulb."""
+    fritz.set_temp(args.ain, args.temp, args.dur)
+    
 
 def main(args=None):
     """Enter the main function of the CLI tool."""
@@ -316,6 +342,36 @@ def main(args=None):
     subparser = _sub_switch.add_parser("apply", help="Apply template")
     subparser.add_argument("ain", type=str, metavar="AIN", help="Actor Identification")
     subparser.set_defaults(func=template_apply)
+
+    # light
+    subparser = _sub.add_parser("light", help="Light commands")
+    _sub_light = subparser.add_subparsers()
+
+    # light state
+    subparser = _sub_light.add_parser("state", help="shows light configuration")
+    subparser.add_argument("ain", type=str, metavar="AIN", help="Actor Identification")
+    subparser.set_defaults(func=light_state)
+
+    # light level
+    subparser = _sub_light.add_parser("level", help="set light level (0-255)")
+    subparser.add_argument("ain", type=str, metavar="AIN", help="Actor Identification")
+    subparser.add_argument("lvl", type=int, metavar="LEVEL", help="Light Level")
+    subparser.set_defaults(func=light_level)
+
+    # light color
+    subparser = _sub_light.add_parser("color", help="set light color")
+    subparser.add_argument("ain", type=str, metavar="AIN", help="Actor Identification")
+    subparser.add_argument("hue", type=int, metavar="HUE", help="Color Hue")
+    subparser.add_argument("sat", type=int, metavar="SAT", help="Color Saturation")
+    subparser.add_argument("dur", nargs="?", type=float, metavar="DUR", help="Transition Duration", default=0)
+    subparser.set_defaults(func=light_color)
+
+    # light temp
+    subparser = _sub_light.add_parser("temp", help="set light temperature")
+    subparser.add_argument("ain", type=str, metavar="AIN", help="Actor Identification")
+    subparser.add_argument("temp", type=int, metavar="TEMP", help="Color Temperature")
+    subparser.add_argument("dur", nargs="?", type=float, metavar="DUR", help="Transition Duration", default=0)
+    subparser.set_defaults(func=light_temp)
 
     args = parser.parse_args(args)
 
